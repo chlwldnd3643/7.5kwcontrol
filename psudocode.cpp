@@ -11,14 +11,12 @@ CoolantControlState ctrl
 
 // === Hydrogen Subsystem Control ===
 function set_hydrogen_on():
-    solenoid_hydrogen_block = 1   // 1 = allow flow
-    solenoid_hydrogen_out = 1
-    recirculation_blower = 1
+    pin 21 on //solenoid_hydrogen_in = 1   // 1 = allow flow
+    pin 20 on // solenoid_hydrogen_out = 1
 
 function set_hydrogen_off():
-    solenoid_hydrogen_block = 0
-    solenoid_hydrogen_out = 0
-    recirculation_blower = 0
+    pin 21 off // solenoid_hydrogen_in = 0
+    pin 20 on // solenoid_hydrogen_out = 0
 
 // === Oxygen Subsystem Control ===
 function set_oxygen_on():
