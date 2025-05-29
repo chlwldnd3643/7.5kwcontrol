@@ -80,7 +80,7 @@ function main_loop():
             loop1()
         }
         //water detection on oxygen output
-        sig = height_oxywater > C;
+        sig = height_oxywater > C; // we should select C with experiment!
         if (sig != prev_sig) {
             solenoid_drain(sig);
             prev_sig = sig;
