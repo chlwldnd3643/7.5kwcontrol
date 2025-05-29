@@ -19,6 +19,9 @@ const int PIN_CBV_OUT = 3;
 const int PIN_CBV_IN = 4;
 const int PIN_PUMP_SEA = 5;
 const int PIN_PUMP_MAIN = 6;
+// === Oxygen Pin Definitions ===
+const int PIN_AIR_COMPRESSOR = 7;
+const int PIN_SOLENOID_O2    = 8;
 
 // === Variables ===
 bool prev_sig = false;
@@ -48,11 +51,13 @@ void set_hydrogen_off() {
 
 // === Oxygen Subsystem Control ===
 void set_oxygen_on() {
-    // 실제 핀 설정 필요
+    digitalWrite(PIN_AIR_COMPRESSOR, HIGH);
+    digitalWrite(PIN_SOLENOID_O2, HIGH);
 }
 
 void set_oxygen_off() {
-    // 실제 핀 설정 필요
+    digitalWrite(PIN_AIR_COMPRESSOR, LOW);
+    digitalWrite(PIN_SOLENOID_O2, LOW);
 }
 
 // === Drain Solenoid Control ===
