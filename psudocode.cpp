@@ -1,153 +1,136 @@
-// === Coolant Control State Definition ===
-struct CoolantControlState {
-    int cod_heater;
-    int cbv_out;
-    int cbv_in;
-    int pump_sea;
-    int pump_main;
-};
-
-CoolantControlState ctrl;
-
 // === Pin Definitions ===
-const int PIN_SOL_HYDROGEN_IN = 21;
-const int PIN_SOL_HYDROGEN_OUT = 20;
-const int PIN_SOL_DRAIN = 22;
+const int coolant_pump1      = 22;  // heater쪽 펌프
+const int coolant_pump2      = 23;  // sea쪽 펌프
+const int coolant_heater     = 24;
+const int coolant_cbv1       = 25;  // heater쪽 밸브
+const int coolant_cbv2       = 26;  // sea쪽 밸브
+const int coolant_temperature = A0; // 온도 센서 아날로그 핀
 
-const int PIN_COD_HEATER = 2;
-const int PIN_CBV_OUT = 3;
-const int PIN_CBV_IN = 4;
-const int PIN_PUMP_SEA = 5;
-const int PIN_PUMP_MAIN = 6;
-// === Oxygen Pin Definitions ===
-const int PIN_AIR_COMPRESSOR = 7;
-const int PIN_SOLENOID_O2    = 8;
+const int hydrogen_valve1    = 28;
+const int hydrogen_valve2    = 29;
 
-// === Variables ===
-bool prev_sig = false;
-float tmp = 0.0;
-float height_oxywater = 0.0;
-const float C = 10.0; // 실험적으로 조정할 기준값
+const int oxygen_compressor  = 30;
+const int oxygen_valve1      = 31;
 
-// === 핀에 맞게 제어 상태 반영 함수 ===
-void apply_coolant_state() {
-    digitalWrite(PIN_COD_HEATER, ctrl.cod_heater);
-    digitalWrite(PIN_CBV_OUT,   ctrl.cbv_out);
-    digitalWrite(PIN_CBV_IN,    ctrl.cbv_in);
-    digitalWrite(PIN_PUMP_SEA,  ctrl.pump_sea);
-    digitalWrite(PIN_PUMP_MAIN, ctrl.pump_main);
-}
+const float C = 100.0; // 임계값 예시
+bool prev_drain_sig = false;
 
-// === Hydrogen Subsystem Control ===
-void set_hydrogen_on() {
-    digitalWrite(PIN_SOL_HYDROGEN_IN, HIGH);
-    digitalWrite(PIN_SOL_HYDROGEN_OUT, HIGH);
-}
+// === Setup ===
+void setup() {
+  // 디지털 출력 핀 설정
+  pinMode(coolant_pump1, OUTPUT);
+  pinMode(coolant_pump2, OUTPUT);
+  pinMode(coolant_heater, OUTPUT);
+  pinMode(coolant_cbv1, OUTPUT);
+  pinMode(coolant_cbv2, OUTPUT);
 
-void set_hydrogen_off() {
-    digitalWrite(PIN_SOL_HYDROGEN_IN, LOW);
-    digitalWrite(PIN_SOL_HYDROGEN_OUT, LOW);
-}
+  pinMode(hydrogen_valve1, OUTPUT);
+  pinMode(hydrogen_valve2, OUTPUT);
 
-// === Oxygen Subsystem Control ===
-void set_oxygen_on() {
-    digitalWrite(PIN_AIR_COMPRESSOR, HIGH);
-    digitalWrite(PIN_SOLENOID_O2, HIGH);
-}
+  pinMode(oxygen_compressor, OUTPUT);
+  pinMode(oxygen_valve1, OUTPUT);
 
-void set_oxygen_off() {
-    digitalWrite(PIN_AIR_COMPRESSOR, LOW);
-    digitalWrite(PIN_SOLENOID_O2, LOW);
-}
-
-// === Drain Solenoid Control ===
-void solenoid_drain(bool sig) {
-    digitalWrite(PIN_SOL_DRAIN, sig ? HIGH : LOW);
-}
-
-// === Coolant Loop Modes ===
-void loop1() {
-    ctrl.cod_heater = 0;
-    ctrl.cbv_out = 1;
-    ctrl.cbv_in = 0;
-    ctrl.pump_sea = 1;
-    ctrl.pump_main = 1;
-    apply_coolant_state();
-}
-
-void loop2() {
-    ctrl.cod_heater = 0;
-    ctrl.cbv_out = 0;
-    ctrl.cbv_in = 1;
-    ctrl.pump_sea = 0;
-    ctrl.pump_main = 1;
-    apply_coolant_state();
-}
-
-void loop3() {
-    ctrl.cod_heater = 1;
-    ctrl.cbv_out = 0;
-    ctrl.cbv_in = 0;
-    ctrl.pump_sea = 0;
-    ctrl.pump_main = 1;
-    apply_coolant_state();
-}
-
-// === System Initialization ===
-void initialize_mode() {
-    set_hydrogen_on();
-    set_oxygen_on();
-    loop3();
-}
-
-// === System Shutdown ===
-void exit_mode() {
-    set_hydrogen_off();
-    set_oxygen_off();
-    ctrl.cod_heater = 0;
-    ctrl.cbv_out = 0;
-    ctrl.cbv_in = 0;
-    ctrl.pump_sea = 0;
-    ctrl.pump_main = 0;
-    apply_coolant_state();
+  // 초기화
+  initialize_mode();
 }
 
 // === Main Loop ===
 void loop() {
-    // 센서 입력 예시
-    tmp = analogRead(A0);
-    height_oxywater = analogRead(A1);
+  // 온도 측정
+  float temp = analogRead(coolant_temperature) * (5.0 / 1023.0) * 100.0; // 예시 변환 (센서 특성 따라 수정)
 
-    if (tmp < 70) {
-        loop3();
-    } else if (tmp < 80) {
-        loop2();
-    } else {
-        loop1();
-    }
+  // 냉각 모드 전환
+  if (temp < 70) {
+    coolant_loop3();
+  } else if (temp < 80) {
+    coolant_loop2();
+  } else {
+    coolant_loop1();
+  }
 
-    bool sig = height_oxywater > C;
-    if (sig != prev_sig) {
-        solenoid_drain(sig);
-        prev_sig = sig;
-    }
+  // 드레인 신호 예시 (산소 수위 기반 → 지금은 임의 처리)
+  float height_oxywater = analogRead(A1); // 예시
+  bool drain_sig = height_oxywater > C;
+  if (drain_sig != prev_drain_sig) {
+    solenoid_drain(drain_sig);
+    prev_drain_sig = drain_sig;
+  }
 
-    delay(1000); // 샘플링 간격
+  delay(1000); // 제어 주기
 }
 
-void setup() {
-    // 핀 초기화
-    pinMode(PIN_SOL_HYDROGEN_IN, OUTPUT);
-    pinMode(PIN_SOL_HYDROGEN_OUT, OUTPUT);
-    pinMode(PIN_SOL_DRAIN, OUTPUT);
+// === Initialization ===
+void initialize_mode() {
+  hydrogen_on();
+  oxygen_on();
+  coolant_loop3(); // 기본 시작은 heater mode
+}
 
-    pinMode(PIN_COD_HEATER, OUTPUT);
-    pinMode(PIN_CBV_OUT, OUTPUT);
-    pinMode(PIN_CBV_IN, OUTPUT);
-    pinMode(PIN_PUMP_SEA, OUTPUT);
-    pinMode(PIN_PUMP_MAIN, OUTPUT);
+// === Coolant Control Loops ===
+void coolant_loop1() {
+  // 히터 OFF
+  digitalWrite(coolant_heater, LOW);
 
-    // 필요 시 산소 파트 핀도 설정
+  // 밸브 설정 (sea 쪽 열기)
+  digitalWrite(coolant_cbv1, LOW);
+  digitalWrite(coolant_cbv2, HIGH);
 
-    initialize_mode();
+  // 펌프 설정
+  digitalWrite(coolant_pump1, LOW);
+  digitalWrite(coolant_pump2, HIGH);
+}
+
+void coolant_loop2() {
+  // 히터 OFF
+  digitalWrite(coolant_heater, LOW);
+
+  // 밸브 모두 닫음
+  digitalWrite(coolant_cbv1, LOW);
+  digitalWrite(coolant_cbv2, LOW);
+
+  // 펌프 설정
+  digitalWrite(coolant_pump1, HIGH);
+  digitalWrite(coolant_pump2, LOW);
+}
+
+void coolant_loop3() {
+  // 히터 ON
+  digitalWrite(coolant_heater, HIGH);
+
+  // heater loop (cbv1 열기)
+  digitalWrite(coolant_cbv1, HIGH);
+  digitalWrite(coolant_cbv2, LOW);
+
+  // 펌프 설정
+  digitalWrite(coolant_pump1, HIGH);
+  digitalWrite(coolant_pump2, LOW);
+}
+
+// === Subsystem Control ===
+void hydrogen_on() {
+  digitalWrite(hydrogen_valve1, HIGH);
+  digitalWrite(hydrogen_valve2, HIGH);
+}
+
+void hydrogen_off() {
+  digitalWrite(hydrogen_valve1, LOW);
+  digitalWrite(hydrogen_valve2, LOW);
+}
+
+void oxygen_on() {
+  digitalWrite(oxygen_compressor, HIGH);
+  digitalWrite(oxygen_valve1, HIGH);
+}
+
+void oxygen_off() {
+  digitalWrite(oxygen_compressor, LOW);
+  digitalWrite(oxygen_valve1, LOW);
+}
+
+// === Drain Control ===
+void solenoid_drain(bool sig) {
+  // 예: 드레인 밸브가 있는 경우
+  const int solenoid_drain_pin = 32; // 가정
+  pinMode(solenoid_drain_pin, OUTPUT);
+  digitalWrite(solenoid_drain_pin, sig ? HIGH : LOW);
 }
