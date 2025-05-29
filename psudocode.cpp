@@ -1,55 +1,77 @@
-//PSEDOCODE EDITING!!
+// === Coolant Control State Definition ===
+typedef struct {
+    int cod_heater
+    int cbv_out
+    int cbv_in
+} CoolantControlState
 
+CoolantControlState ctrl
 
-initial_mode(){
-    
-//Hydrogen part initialization
-solenoid_hydrogen_block=1; //1means allowed, 0 means blocking
-solenoid_hydrogen_out=1;
-recirculation_blower=1;
+// === Hydrogen Subsystem Control ===
+function set_hydrogen_on():
+    solenoid_hydrogen_block = 1   // 1 = allow flow
+    solenoid_hydrogen_out = 1
+    recirculation_blower = 1
 
-//Oxygen Part initialization
-Air_Compressor = 1;
-Solenoid_O2 = 1;
+function set_hydrogen_off():
+    solenoid_hydrogen_block = 0
+    solenoid_hydrogen_out = 0
+    recirculation_blower = 0
 
-//Coolant Part Initialization
-cod_heater=1;
-cbv -> loop3
-}
+// === Oxygen Subsystem Control ===
+function set_oxygen_on():
+    air_compressor = 1
+    solenoid_O2 = 1
 
-exit_mode(){
-//Hydrogen part exit
-solenoid_hydrogen_block=0; //1means allowed, 0 means blocking
-solenoid_hydrogen_out=0;
-recirculation_blower=0;
+function set_oxygen_off():
+    air_compressor = 0
+    solenoid_O2 = 0
 
-//Oxygen Part exit
-Air_Compressor = 0;
-Solenoid_O2 = 0;
+// === Coolant Loop Modes ===
+function loop1():                 // High temperature
+    ctrl.cod_heater = 0
+    ctrl.cbv_out = 1
+    ctrl.cbv_in = 0
 
-//Coolant Part exit
-cod_heater=0;
-cbv -> loop3
-}
+function loop2():                 // Mid-range temperature
+    ctrl.cod_heater = 0
+    ctrl.cbv_out = 0
+    ctrl.cbv_in = 1
 
+function loop3():                 // Low temperature (heater ON)
+    ctrl.cod_heater = 1
+    ctrl.cbv_out = 0
+    ctrl.cbv_in = 0
 
-//coolant part hello
-while(1){
-if tmp < 70:
+// === System Initialization ===
+function initialize_mode():
+    set_hydrogen_on()
+    set_oxygen_on()
+    loop3()                      // Set default coolant mode
 
-    cod heater =1
+// === System Shutdown ===
+function exit_mode():
+    set_hydrogen_off()
+    set_oxygen_off()
+    ctrl.cod_heater = 0         // Make sure heater is OFF
+    ctrl.cbv_out = 0
+    ctrl.cbv_in = 0             // Default valve state
 
-    cbv -> loop3
+// === Main Control Loop ===
+function main_loop():
+    while (true) {
+        if (tmp < 70) {
+            loop3()
+        }
+        else if (tmp < 80) {
+            loop2()
+        }
+        else {
+            loop1()
+        }
+    }
 
-if 70< tmp < 80:
-
-    cod heater = 0
-
-    cbv -> loop2
-
-if tmp>80:
-
-    cod heater =0
-
-    cbv -> loop1
-}
+// === System Execution ===
+initialize_mode()
+main_loop()
+// Note: exit_mode() can be called based on an external shutdown trigger.
