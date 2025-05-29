@@ -12,25 +12,28 @@ CoolantControlState ctrl;
 // === Pin Definitions ===
 const int PIN_SOL_HYDROGEN_IN = 21;
 const int PIN_SOL_HYDROGEN_OUT = 20;
-const int PIN_SOL_DRAIN = 22; // 예시 핀. 실제 하드웨어에 따라 수정 필요
+const int PIN_SOL_DRAIN = 22;
+
+const int PIN_COD_HEATER = 2;
+const int PIN_CBV_OUT = 3;
+const int PIN_CBV_IN = 4;
+const int PIN_PUMP_SEA = 5;
+const int PIN_PUMP_MAIN = 6;
 
 // === Variables ===
 bool prev_sig = false;
-float tmp = 0.0; // 온도 센서 값
+float tmp = 0.0;
 float height_oxywater = 0.0;
-const float C = 10.0; // 실험적으로 정할 값
+const float C = 10.0; // 실험적으로 조정할 기준값
 
-// === Function Prototypes ===
-void set_hydrogen_on();
-void set_hydrogen_off();
-void set_oxygen_on();
-void set_oxygen_off();
-void solenoid_drain(bool sig);
-void loop1();
-void loop2();
-void loop3();
-void initialize_mode();
-void exit_mode();
+// === 핀에 맞게 제어 상태 반영 함수 ===
+void apply_coolant_state() {
+    digitalWrite(PIN_COD_HEATER, ctrl.cod_heater);
+    digitalWrite(PIN_CBV_OUT,   ctrl.cbv_out);
+    digitalWrite(PIN_CBV_IN,    ctrl.cbv_in);
+    digitalWrite(PIN_PUMP_SEA,  ctrl.pump_sea);
+    digitalWrite(PIN_PUMP_MAIN, ctrl.pump_main);
+}
 
 // === Hydrogen Subsystem Control ===
 void set_hydrogen_on() {
@@ -45,13 +48,12 @@ void set_hydrogen_off() {
 
 // === Oxygen Subsystem Control ===
 void set_oxygen_on() {
-    digitalWrite(PIN_AIR_COMPRESSOR, HIGH);
-    digitalWrite(PIN_SOLENOID_O2, HIGH);
+    // 실제 핀 설정 필요
 }
 
 void set_oxygen_off() {
-    digitalWrite(PIN_AIR_COMPRESSOR, LOW);
-    digitalWrite(PIN_SOLENOID_O2, LOW);}
+    // 실제 핀 설정 필요
+}
 
 // === Drain Solenoid Control ===
 void solenoid_drain(bool sig) {
@@ -65,6 +67,7 @@ void loop1() {
     ctrl.cbv_in = 0;
     ctrl.pump_sea = 1;
     ctrl.pump_main = 1;
+    apply_coolant_state();
 }
 
 void loop2() {
@@ -73,6 +76,7 @@ void loop2() {
     ctrl.cbv_in = 1;
     ctrl.pump_sea = 0;
     ctrl.pump_main = 1;
+    apply_coolant_state();
 }
 
 void loop3() {
@@ -81,6 +85,7 @@ void loop3() {
     ctrl.cbv_in = 0;
     ctrl.pump_sea = 0;
     ctrl.pump_main = 1;
+    apply_coolant_state();
 }
 
 // === System Initialization ===
@@ -97,13 +102,16 @@ void exit_mode() {
     ctrl.cod_heater = 0;
     ctrl.cbv_out = 0;
     ctrl.cbv_in = 0;
+    ctrl.pump_sea = 0;
+    ctrl.pump_main = 0;
+    apply_coolant_state();
 }
 
-// === Main Control Loop ===
+// === Main Loop ===
 void loop() {
-    // 센서 읽기 예시 (사용자 환경에 따라 적절히 수정)
-    tmp = analogRead(A0); // 온도센서 입력 (예)
-    height_oxywater = analogRead(A1); // 수위센서 입력 (예)
+    // 센서 입력 예시
+    tmp = analogRead(A0);
+    height_oxywater = analogRead(A1);
 
     if (tmp < 70) {
         loop3();
@@ -119,15 +127,22 @@ void loop() {
         prev_sig = sig;
     }
 
-    delay(1000); // 루프 주기 설정
+    delay(1000); // 샘플링 간격
 }
 
 void setup() {
-    // 핀 모드 설정
+    // 핀 초기화
     pinMode(PIN_SOL_HYDROGEN_IN, OUTPUT);
     pinMode(PIN_SOL_HYDROGEN_OUT, OUTPUT);
     pinMode(PIN_SOL_DRAIN, OUTPUT);
-    // 다른 핀들에 대해서도 pinMode 추가 필요
+
+    pinMode(PIN_COD_HEATER, OUTPUT);
+    pinMode(PIN_CBV_OUT, OUTPUT);
+    pinMode(PIN_CBV_IN, OUTPUT);
+    pinMode(PIN_PUMP_SEA, OUTPUT);
+    pinMode(PIN_PUMP_MAIN, OUTPUT);
+
+    // 필요 시 산소 파트 핀도 설정
 
     initialize_mode();
 }
