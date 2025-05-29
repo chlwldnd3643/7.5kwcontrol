@@ -27,6 +27,9 @@ function set_oxygen_off():
     air_compressor = 0
     solenoid_O2 = 0
 
+function solenoid_drain(sig):
+    solenoid_drain = sig;
+
 // === Coolant Loop Modes ===
 function loop1():                 // High temperature
     ctrl.cod_heater = 0
@@ -48,7 +51,8 @@ function loop3():                 // Low temperature (heater ON)
     ctrl.cbv_in = 0
     ctrl.pump_sea = 0
     ctrl.pump_main = 1
-
+function 
+    
 // === System Initialization ===
 function initialize_mode():
     set_hydrogen_on()
@@ -75,9 +79,17 @@ function main_loop():
         else {
             loop1()
         }
+        //water detection on oxygen output
+        sig = height_oxywater > C;
+        if (sig != prev_sig) {
+            solenoid_drain(sig);
+            prev_sig = sig;
+        }
+    
     }
 
 // === System Execution ===
+prev_sig=false;
 initialize_mode()
 main_loop()
 // Note: exit_mode() can be called based on an external shutdown trigger.
