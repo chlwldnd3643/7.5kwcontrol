@@ -7,12 +7,17 @@ const int coolant_cbv2       = 26;  // sea쪽 밸브
 const int coolant_temperature = A0; // 온도 센서 아날로그 핀
 
 const int hydrogen_valve1    = 28;
-const int hydrogen_valve2    = 29;
+const int hydrogen_drain_valve    = 29;
 
 const int oxygen_compressor  = 30;
-const int oxygen_valve1      = 31;
+const int oxygen_drain_valve = 31;
 
-const float C = 100.0; // 임계값 예시
+const float water_height_limit = 100.0; // 임계값 예시
+
+const unsigned long drain_duration = 5000; // t초 → 5초 (5000ms)
+unsigned long drain_start_time = 0;
+bool is_draining = false;
+
 bool prev_drain_sig = false;
 
 // === Setup ===
@@ -48,12 +53,17 @@ void loop() {
     coolant_loop1();
   }
 
-  // 드레인 신호 예시 (산소 수위 기반 → 지금은 임의 처리)
-  float height_oxywater = analogRead(A1); // 예시
-  bool drain_sig = height_oxywater > C;
+  float water_height = analogRead(A1);
+  bool drain_sig = water_height > C;  // C는 정의 필요
   if (drain_sig != prev_drain_sig) {
     solenoid_drain(drain_sig);
     prev_drain_sig = drain_sig;
+  }
+
+  // 드레인 타이머 종료 체크
+  if (is_draining && millis() - drain_start_time >= drain_duration) {
+    digitalWrite(oxygen_drain_valve, LOW);
+    is_draining = false;
   }
 
   delay(1000); // 제어 주기
@@ -122,12 +132,15 @@ void oxygen_on() {
 void oxygen_off() {
   digitalWrite(oxygen_compressor, LOW);
 }
-//
+// On specific condition the hydrogen drain valve should be on
+// On specific condition the oxygen valve should be on
 
 // === Drain Control ===
 void solenoid_drain(bool sig) {
-  // 예: 드레인 밸브가 있는 경우
-  const int solenoid_drain_pin = 32; // 가정
-  pinMode(solenoid_drain_pin, OUTPUT);
-  digitalWrite(solenoid_drain_pin, sig ? HIGH : LOW);
+  pinMode(oxygen_drain_valve, OUTPUT);
+  if (sig) {
+    digitalWrite(oxygen_drain_valve, HIGH);
+    drain_start_time = millis();  // 현재 시간 저장
+    is_draining = true;
+  }
 }
