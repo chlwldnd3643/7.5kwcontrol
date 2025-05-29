@@ -109,23 +109,20 @@ void coolant_loop3() {
 // === Subsystem Control ===
 void hydrogen_on() {
   digitalWrite(hydrogen_valve1, HIGH);
-  digitalWrite(hydrogen_valve2, HIGH);
 }
 
 void hydrogen_off() {
   digitalWrite(hydrogen_valve1, LOW);
-  digitalWrite(hydrogen_valve2, LOW);
 }
 
 void oxygen_on() {
   digitalWrite(oxygen_compressor, HIGH);
-  digitalWrite(oxygen_valve1, HIGH);
 }
 
 void oxygen_off() {
   digitalWrite(oxygen_compressor, LOW);
-  digitalWrite(oxygen_valve1, LOW);
 }
+//
 
 // === Drain Control ===
 void solenoid_drain(bool sig) {
