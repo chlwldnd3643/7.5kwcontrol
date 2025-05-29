@@ -3,6 +3,8 @@ typedef struct {
     int cod_heater
     int cbv_out
     int cbv_in
+    int pump_sea
+    int pump_main
 } CoolantControlState
 
 CoolantControlState ctrl
@@ -32,16 +34,22 @@ function loop1():                 // High temperature
     ctrl.cod_heater = 0
     ctrl.cbv_out = 1
     ctrl.cbv_in = 0
+    ctrl.pump_sea = 1
+    ctrl.pump_main = 1
 
 function loop2():                 // Mid-range temperature
     ctrl.cod_heater = 0
     ctrl.cbv_out = 0
     ctrl.cbv_in = 1
+    ctrl.pump_sea = 0
+    ctrl.pump_main = 1
 
 function loop3():                 // Low temperature (heater ON)
     ctrl.cod_heater = 1
     ctrl.cbv_out = 0
     ctrl.cbv_in = 0
+    ctrl.pump_sea = 0
+    ctrl.pump_main = 1
 
 // === System Initialization ===
 function initialize_mode():
