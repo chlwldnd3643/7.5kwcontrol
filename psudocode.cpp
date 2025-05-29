@@ -45,14 +45,13 @@ void set_hydrogen_off() {
 
 // === Oxygen Subsystem Control ===
 void set_oxygen_on() {
-    // 예시: 실제 사용하려는 디지털 핀 또는 제어 변수를 지정해야 함
-    // 예: digitalWrite(PIN_AIR_COMPRESSOR, HIGH);
-    //     digitalWrite(PIN_SOLENOID_O2, HIGH);
+    digitalWrite(PIN_AIR_COMPRESSOR, HIGH);
+    digitalWrite(PIN_SOLENOID_O2, HIGH);
 }
 
 void set_oxygen_off() {
-    // 예시: 실제 사용하려는 디지털 핀 또는 제어 변수를 지정해야 함
-}
+    digitalWrite(PIN_AIR_COMPRESSOR, LOW);
+    digitalWrite(PIN_SOLENOID_O2, LOW);}
 
 // === Drain Solenoid Control ===
 void solenoid_drain(bool sig) {
