@@ -1,19 +1,35 @@
 //PSEDOCODE EDITING!!
 
 
-initial_on(){
+initial_mode(){
     
-//hydrogen part initialization
-solenoid_hydrogenblocking=1; //1means allowed, 0 means blocking
-solenoid_hydrogenout=1;
+//Hydrogen part initialization
+solenoid_hydrogen_block=1; //1means allowed, 0 means blocking
+solenoid_hydrogen_out=1;
 recirculation_blower=1;
 
 //Oxygen Part initialization
-Compressor = 1;
+Air_Compressor = 1;
 Solenoid_O2 = 1;
 
 //Coolant Part Initialization
-    
+cod_heater=1;
+cbv -> loop3
+}
+
+exit_mode(){
+//Hydrogen part exit
+solenoid_hydrogen_block=0; //1means allowed, 0 means blocking
+solenoid_hydrogen_out=0;
+recirculation_blower=0;
+
+//Oxygen Part exit
+Air_Compressor = 0;
+Solenoid_O2 = 0;
+
+//Coolant Part exit
+cod_heater=0;
+cbv -> loop3
 }
 
 
