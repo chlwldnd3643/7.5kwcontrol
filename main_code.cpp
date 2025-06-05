@@ -12,6 +12,9 @@ int thermoCS = 53;  // CS (Chip Select)
 
 int thermoCLK = 52; // SCK (Serial Clock)
 
+//Hydrogen
+int limit;
+
 // MAX6675 객체 생성
 
 MAX6675 thermocouple(thermoCLK, thermoCS, thermoDO);
@@ -32,7 +35,10 @@ const int coolant_cbv1          = 25;  // heater쪽 밸브
 const int coolant_cbv2_power    = 22;  // sea쪽 밸브 파워
 
 const int coolant_cbv2          = 23;  // sea쪽 밸브
- 
+
+const int AOUTpin=0;//the AOUT pin of the hydrogen sensor goes into analog pin A0 of the arduino
+const int DOUTpin=8;//the DOUT pin of the hydrogen sensor goes into digital pin D8 of the arduino
+const int ledPin=13;//the anode of the LED connects to digital pin D13 of the arduino
  
 // function parameter
 
@@ -66,6 +72,9 @@ void setup() {
   pinMode(coolant_cbv2_power, OUTPUT);
 
   pinMode(coolant_cbv2, OUTPUT);
+
+  pinMode(DOUTpin, INPUT);//sets the pin as an input to the arduino
+  pinMode(ledPin, OUTPUT);//sets the pin as an output of the arduino
  
   initialize_mode();
  
@@ -84,11 +93,22 @@ void setup() {
   Serial.println("If you want to stop heater, please press 'F'!");
 
   Serial.println("If you want to stop, please press 'T'!");
+
+ 
  
 }
  
 void loop() {
+  //Hydrogen Detect
+  limit= digitalRead(DOUTpin);
+  if (limit == HIGH){
+  digitalWrite(ledPin, HIGH);//if limit has been reached, LED turns on as status indicator
+  }
+  else{
+  digitalWrite(ledPin, LOW);//if threshold not reached, LED remains off
+  }
 
+ 
   // 정지
 
   if (Serial.available()) {
